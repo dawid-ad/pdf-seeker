@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -42,7 +43,6 @@ public class DesktopApp extends JFrame {
     }
 
     public DesktopApp(){
-        loadAppSettings();
         try {
             UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
             createUIComponents();
@@ -57,8 +57,11 @@ public class DesktopApp extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(820,500);
         setLocationRelativeTo(null);
-        setVisible(true);
+        loadAppSettings();
+        setIconImage(Objects.requireNonNull(createImageIcon("/pdf.png")).getImage());
         setResizable(true);
+        setVisible(true);
+
 
         searchButton.addActionListener(e -> handleSearchButton());
         wordToFind.addKeyListener(new KeyAdapter() {
@@ -86,6 +89,16 @@ public class DesktopApp extends JFrame {
                 handleCLoseEvent();
             }
         });
+    }
+    // Metoda do uzyskania ImageIcon z pliku w katalogu resources
+    private static ImageIcon createImageIcon(String path) {
+        java.net.URL imgURL = DesktopApp.class.getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL);
+        } else {
+            System.err.println("Nie udało się załadować ikony: " + path);
+            return null;
+        }
     }
 
     private void loadAppSettings(){
@@ -245,12 +258,16 @@ public class DesktopApp extends JFrame {
         }
     }
     private void handleCLoseEvent() {
-        List<String> lastUsagePaths = new ArrayList<>();
-        for(int i = chosenFolderPathBox.getItemCount(); i >= 0; i--) {
-            lastUsagePaths.add(chosenFolderPathBox.getItemAt(i));
+        try{
+            List<String> lastUsagePaths = new ArrayList<>();
+            for(int i = 0; i < chosenFolderPathBox.getItemCount(); i++) {
+                lastUsagePaths.add(chosenFolderPathBox.getItemAt(i));
+            }
+            int lastSelectedPathIndex = chosenFolderPathBox.getSelectedIndex();
+            settingsManager.saveSettings(pdfZoomSlider.getValue(),lastUsagePaths,lastSelectedPathIndex);
+        } catch (Exception e){
+            e.printStackTrace();
         }
-        int lastSelectedPathIndex = chosenFolderPathBox.getSelectedIndex();
-        settingsManager.saveSettings(pdfZoomSlider.getValue(),lastUsagePaths,lastSelectedPathIndex);
     }
 
     private void createUIComponents() {
